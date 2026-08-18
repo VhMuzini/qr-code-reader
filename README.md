@@ -73,9 +73,20 @@ Pré-requisito: [Flutter SDK](https://docs.flutter.dev/get-started/install)
 instalado (canal stable).
 
 ```bash
+flutter create .   # regenera os ícones padrão de Android/iOS (ver nota abaixo)
 flutter pub get
 flutter run
 ```
+
+> **Por que rodar `flutter create .`?** O ambiente onde este projeto foi
+> criado não conseguiu enviar arquivos binários (os ícones `.png`
+> padrão do Flutter) para o repositório Git. O comando acima é seguro:
+> ele só recria arquivos ausentes (os ícones), sem sobrescrever
+> `AndroidManifest.xml`, `Info.plist` ou qualquer código já
+> personalizado — isso foi testado antes de escrever esta instrução.
+> Depois disso, sinta-se à vontade para trocar os ícones padrão pelos
+> seus próprios, em `android/app/src/main/res/mipmap-*` e
+> `ios/Runner/Assets.xcassets/AppIcon.appiconset/`.
 
 Para gerar um APK de release:
 
