@@ -9,9 +9,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../core/qr_type_presentation.dart';
 import '../core/snackbar_extensions.dart';
+import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
 import '../models/parsed_qr_content.dart';
 import '../models/qr_content_type.dart';
+import '../services/safe_action_uri.dart';
 import '../widgets/labeled_value.dart';
 import '../widgets/neon_action_button.dart';
 import '../widgets/neon_container.dart';
@@ -133,7 +135,7 @@ class ResultScreen extends StatelessWidget {
           NeonActionButton(
             icon: Icons.open_in_new_rounded,
             label: 'Abrir',
-            onPressed: () => _launch(context, content.rawValue),
+            onPressed: () => _openLink(context),
           ),
         );
       case QrContentType.phone:
@@ -144,7 +146,9 @@ class ResultScreen extends StatelessWidget {
             label: 'Ligar',
             onPressed: () => _launch(
               context,
-              'tel:${content.fields['number'] ?? content.rawValue}',
+              SafeActionUri.phone(
+                content.fields['number'] ?? content.rawValue,
+              ),
             ),
           ),
         );
@@ -156,8 +160,10 @@ class ResultScreen extends StatelessWidget {
             label: 'Enviar SMS',
             onPressed: () => _launch(
               context,
-              'sms:${content.fields['number'] ?? ''}'
-              '?body=${Uri.encodeComponent(content.fields['body'] ?? '')}',
+              SafeActionUri.sms(
+                content.fields['number'] ?? '',
+                content.fields['body'] ?? '',
+              ),
             ),
           ),
         );
@@ -169,9 +175,11 @@ class ResultScreen extends StatelessWidget {
             label: 'E-mail',
             onPressed: () => _launch(
               context,
-              'mailto:${content.fields['address'] ?? ''}'
-              '?subject=${Uri.encodeComponent(content.fields['subject'] ?? '')}'
-              '&body=${Uri.encodeComponent(content.fields['body'] ?? '')}',
+              SafeActionUri.email(
+                content.fields['address'] ?? '',
+                subject: content.fields['subject'] ?? '',
+                body: content.fields['body'] ?? '',
+              ),
             ),
           ),
         );
@@ -183,10 +191,7 @@ class ResultScreen extends StatelessWidget {
           NeonActionButton(
             icon: Icons.map_rounded,
             label: 'Abrir mapa',
-            onPressed: () => _launch(
-              context,
-              'https://www.openstreetmap.org/?mlat=$lat&mlon=$lng#map=16/$lat/$lng',
-            ),
+            onPressed: () => _launch(context, SafeActionUri.map(lat, lng)),
           ),
         );
       case QrContentType.wifi:
@@ -215,9 +220,65 @@ class ResultScreen extends StatelessWidget {
     context.showFeedbackSnackBar('Copiado para a área de transferência');
   }
 
-  Future<void> _launch(BuildContext context, String uriString) async {
-    final uri = Uri.tryParse(uriString);
-    if (uri == null || !await canLaunchUrl(uri)) {
+  /// Abre um link lido do QR Code, mas só depois de mostrar o endereço
+  /// completo e ter a confirmação do usuário.
+  ///
+  /// QR Codes são o vetor clássico de phishing justamente porque o
+  /// destino é invisível antes de abrir: o adesivo diz "pague aqui" e o
+  /// link vai para outro lugar. Confirmar com o host em destaque é o que
+  /// dá ao usuário a chance de perceber isso.
+  Future<void> _openLink(BuildContext context) async {
+    final uri = SafeActionUri.web(content.rawValue);
+    if (uri == null) {
+      context.showFeedbackSnackBar('Não foi possível abrir este conteúdo');
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Abrir link externo?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              uri.host,
+              style: AppTextStyles.mono().copyWith(
+                color: AppColors.neonCyan,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SelectableText(
+              uri.toString(),
+              style: AppTextStyles.mono(fontSize: 13).copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Abrir'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+    await _launch(context, uri);
+  }
+
+  Future<void> _launch(BuildContext context, Uri? uri) async {
+    if (uri == null ||
+        !SafeActionUri.isAllowed(uri) ||
+        !await canLaunchUrl(uri)) {
       if (!context.mounted) return;
       context.showFeedbackSnackBar('Não foi possível abrir este conteúdo');
       return;
