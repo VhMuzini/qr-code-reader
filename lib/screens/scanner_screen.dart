@@ -68,9 +68,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     );
 
     if (!mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ResultScreen(content: parsed)),
-    );
+    await Navigator.of(context).push(ResultScreen.route(parsed));
 
     // Ao voltar da tela de resultado, retomamos a leitura.
     _isNavigatingToResult = false;
@@ -169,7 +167,7 @@ class _ScannerControlButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isActive ? AppColors.neonGreen : AppColors.neonCyan;
     return Material(
-      color: const Color(0xCC10101B),
+      color: AppColors.surfaceOverlay,
       shape: CircleBorder(side: BorderSide(color: color)),
       child: InkWell(
         customBorder: const CircleBorder(),

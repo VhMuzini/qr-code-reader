@@ -33,7 +33,10 @@ próprio aparelho.
 ```
 lib/
   core/
-    theme/            # Paleta de cores e ThemeData cyberpunk
+    theme/            # Paleta, estilos de texto e ThemeData cyberpunk
+      app_colors.dart
+      app_text_styles.dart
+    snackbar_extensions.dart # Feedback breve compartilhado
     qr_type_presentation.dart  # Ícone/cor de cada tipo de conteúdo
   models/              # Classes de dados (imutáveis, sem lógica de UI)
   services/
@@ -44,6 +47,7 @@ lib/
     result_screen.dart  # Conteúdo interpretado + ações
     history_screen.dart # Histórico local
   widgets/             # Componentes visuais reutilizáveis (overlay, botões)
+    labeled_value.dart
   main.dart            # Ponto de entrada
 test/
   qr_content_parser_test.dart  # Testes unitários do parser

@@ -3,6 +3,8 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
+
 /// Um [Container] com borda colorida e um "glow" (brilho) ao redor,
 /// simulando o visual de painéis holográficos comuns em interfaces
 /// cyberpunk.
@@ -14,7 +16,7 @@ class NeonContainer extends StatelessWidget {
   const NeonContainer({
     super.key,
     required this.child,
-    this.color = const Color(0xFF00F0FF),
+    this.color = AppColors.neonCyan,
     this.padding = const EdgeInsets.all(16),
     this.borderRadius = 16,
     this.glowStrength = 0.35,
@@ -41,7 +43,7 @@ class NeonContainer extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: const Color(0xFF10101B),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(color: color.withValues(alpha: 0.8)),
         boxShadow: [
