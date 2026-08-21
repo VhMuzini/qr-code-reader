@@ -8,9 +8,11 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/qr_type_presentation.dart';
-import '../core/theme/app_colors.dart';
+import '../core/snackbar_extensions.dart';
+import '../core/theme/app_text_styles.dart';
 import '../models/parsed_qr_content.dart';
 import '../models/qr_content_type.dart';
+import '../widgets/labeled_value.dart';
 import '../widgets/neon_action_button.dart';
 import '../widgets/neon_container.dart';
 
@@ -23,6 +25,11 @@ class ResultScreen extends StatelessWidget {
   const ResultScreen({super.key, required this.content});
 
   final ParsedQrContent content;
+
+  /// Cria a rota única usada para abrir um resultado recém-lido ou salvo.
+  static MaterialPageRoute<void> route(ParsedQrContent content) {
+    return MaterialPageRoute(builder: (_) => ResultScreen(content: content));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,12 +105,7 @@ class ResultScreen extends StatelessWidget {
       case QrContentType.plainText:
         return SelectableText(
           content.rawValue,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontFamily: 'monospace',
-            fontSize: 15,
-            height: 1.5,
-          ),
+          style: AppTextStyles.mono(fontSize: 15).copyWith(height: 1.5),
         );
     }
   }
@@ -210,18 +212,14 @@ class ResultScreen extends StatelessWidget {
   Future<void> _copyToClipboard(BuildContext context, String text) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Copiado para a área de transferência')),
-    );
+    context.showFeedbackSnackBar('Copiado para a área de transferência');
   }
 
   Future<void> _launch(BuildContext context, String uriString) async {
     final uri = Uri.tryParse(uriString);
     if (uri == null || !await canLaunchUrl(uri)) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível abrir este conteúdo')),
-      );
+      context.showFeedbackSnackBar('Não foi possível abrir este conteúdo');
       return;
     }
     await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -271,7 +269,7 @@ class _KeyValueDetails extends StatelessWidget {
     if (entries.isEmpty) {
       return const Text(
         'Nenhuma informação adicional disponível.',
-        style: TextStyle(color: AppColors.textSecondary),
+        style: AppTextStyles.secondaryMessage,
       );
     }
 
@@ -279,23 +277,7 @@ class _KeyValueDetails extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final entry in entries) ...[
-          Text(
-            entry.key.toUpperCase(),
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 11,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 2),
-          SelectableText(
-            entry.value!,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontFamily: 'monospace',
-              fontSize: 15,
-            ),
-          ),
+          LabeledValue(label: entry.key, value: entry.value!),
           if (entry != entries.last) const SizedBox(height: 14),
         ],
       ],
@@ -326,59 +308,35 @@ class _WifiDetailsState extends State<_WifiDetails> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'NOME DA REDE (SSID)',
-          style: TextStyle(color: AppColors.textMuted, fontSize: 11, letterSpacing: 1),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          ssid.isEmpty ? '(oculto)' : ssid,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontFamily: 'monospace',
-            fontSize: 16,
-          ),
+        LabeledValue(
+          label: 'Nome da rede (SSID)',
+          value: ssid.isEmpty ? '(oculto)' : ssid,
+          fontSize: 16,
         ),
         const SizedBox(height: 14),
-        const Text(
-          'SEGURANÇA',
-          style: TextStyle(color: AppColors.textMuted, fontSize: 11, letterSpacing: 1),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          security,
-          style: const TextStyle(color: AppColors.textPrimary, fontFamily: 'monospace'),
+        LabeledValue(
+          label: 'Segurança',
+          value: security,
+          fontSize: 14,
+          selectable: false,
         ),
         if (password.isNotEmpty) ...[
           const SizedBox(height: 14),
-          const Text(
-            'SENHA',
-            style: TextStyle(color: AppColors.textMuted, fontSize: 11, letterSpacing: 1),
-          ),
-          const SizedBox(height: 2),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _passwordVisible ? password : '•' * password.length,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontFamily: 'monospace',
-                    fontSize: 16,
-                  ),
-                ),
+          LabeledValue(
+            label: 'Senha',
+            value: _passwordVisible ? password : '•' * password.length,
+            fontSize: 16,
+            selectable: false,
+            trailing: IconButton(
+              icon: Icon(
+                _passwordVisible
+                    ? Icons.visibility_off_rounded
+                    : Icons.visibility_rounded,
               ),
-              IconButton(
-                icon: Icon(
-                  _passwordVisible
-                      ? Icons.visibility_off_rounded
-                      : Icons.visibility_rounded,
-                ),
-                onPressed: () {
-                  setState(() => _passwordVisible = !_passwordVisible);
-                },
-              ),
-            ],
+              onPressed: () {
+                setState(() => _passwordVisible = !_passwordVisible);
+              },
+            ),
           ),
         ],
       ],

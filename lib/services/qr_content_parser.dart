@@ -31,7 +31,7 @@ class QrContentParser {
       return _parseGeo(value);
     }
     if (upper.startsWith('MAILTO:')) {
-      return _parseEmail(value.substring('mailto:'.length));
+      return _parseEmail(_withoutScheme(value, 'mailto:'));
     }
     if (upper.startsWith('MATMSG:')) {
       return _parseMatMsg(value);
@@ -40,7 +40,7 @@ class QrContentParser {
       return ParsedQrContent(
         rawValue: value,
         type: QrContentType.phone,
-        fields: {'number': value.substring('tel:'.length)},
+        fields: {'number': _withoutScheme(value, 'tel:')},
       );
     }
     if (upper.startsWith('SMSTO:') || upper.startsWith('SMS:')) {
@@ -66,7 +66,7 @@ class QrContentParser {
   // WIFI:T:WPA;S:MinhaRede;P:minhaSenha;H:false;;
   // -------------------------------------------------------------------
   static ParsedQrContent _parseWifi(String value) {
-    final fields = _splitFields(value.substring('WIFI:'.length));
+    final fields = _splitFields(_withoutScheme(value, 'WIFI:'));
     return ParsedQrContent(
       rawValue: value,
       type: QrContentType.wifi,
@@ -125,14 +125,14 @@ class QrContentParser {
   // geo:latitude,longitude[,altitude]
   // -------------------------------------------------------------------
   static ParsedQrContent _parseGeo(String value) {
-    final body = value.substring('geo:'.length);
+    final body = _withoutScheme(value, 'geo:');
     final parts = body.split(RegExp('[,;]'));
     return ParsedQrContent(
       rawValue: value,
       type: QrContentType.geo,
       fields: {
-        'latitude': parts.isNotEmpty ? parts[0] : '',
-        'longitude': parts.length > 1 ? parts[1] : '',
+        'latitude': _partAt(parts, 0),
+        'longitude': _partAt(parts, 1),
       },
     );
   }
@@ -160,7 +160,7 @@ class QrContentParser {
   // MATMSG:TO:endereco@dominio.com;SUB:Assunto;BODY:Mensagem;;
   // -------------------------------------------------------------------
   static ParsedQrContent _parseMatMsg(String value) {
-    final fields = _splitFields(value.substring('MATMSG:'.length));
+    final fields = _splitFields(_withoutScheme(value, 'MATMSG:'));
     return ParsedQrContent(
       rawValue: value,
       type: QrContentType.email,
@@ -178,20 +178,20 @@ class QrContentParser {
   static ParsedQrContent _parseSms(String value) {
     final upper = value.toUpperCase();
     if (upper.startsWith('SMSTO:')) {
-      final body = value.substring('SMSTO:'.length);
+      final body = _withoutScheme(value, 'SMSTO:');
       final parts = body.split(':');
       return ParsedQrContent(
         rawValue: value,
         type: QrContentType.sms,
         fields: {
-          'number': parts.isNotEmpty ? parts[0] : '',
+          'number': _partAt(parts, 0),
           'body': parts.length > 1 ? parts.sublist(1).join(':') : '',
         },
       );
     }
 
     // sms:numero?body=mensagem
-    final withoutScheme = value.substring('sms:'.length);
+    final withoutScheme = _withoutScheme(value, 'sms:');
     final uri = Uri.tryParse('sms:$withoutScheme');
     final number = uri?.path ?? withoutScheme.split('?').first;
     return ParsedQrContent(
@@ -202,6 +202,20 @@ class QrContentParser {
         'body': uri?.queryParameters['body'] ?? '',
       },
     );
+  }
+
+  /// Remove o esquema já reconhecido sem alterar o restante do valor.
+  ///
+  /// A comparação de caixa acontece antes, em [parse] ou no parser
+  /// específico; aqui usamos apenas o comprimento para preservar o texto.
+  static String _withoutScheme(String value, String scheme) {
+    return value.substring(scheme.length);
+  }
+
+  /// Retorna a parte na posição pedida ou uma string vazia quando ela não
+  /// existe, mantendo seguros os parsers de formatos incompletos.
+  static String _partAt(List<String> parts, int index) {
+    return index < parts.length ? parts[index] : '';
   }
 
   /// Divide um trecho no formato `CHAVE:valor;CHAVE2:valor2;;` em um mapa,

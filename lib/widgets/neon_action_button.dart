@@ -4,6 +4,8 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
+
 /// Botão retangular com ícone + rótulo e contorno neon.
 ///
 /// Diferente de um [ElevatedButton] comum, ele é pensado para caber em
@@ -15,7 +17,7 @@ class NeonActionButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onPressed,
-    this.color = const Color(0xFF00F0FF),
+    this.color = AppColors.neonCyan,
   });
 
   final IconData icon;
@@ -34,7 +36,7 @@ class NeonActionButton extends StatelessWidget {
           width: 92,
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF10101B),
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: color.withValues(alpha: 0.7)),
           ),

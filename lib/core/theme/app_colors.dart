@@ -24,6 +24,20 @@ abstract final class AppColors {
   /// elevadas (ex.: itens de lista, painéis).
   static const Color surface = Color(0xFF10101B);
 
+  /// [surface] com 80% de opacidade, usado sobre a prévia da câmera.
+  ///
+  /// O valor hexadecimal mantém a mesma cor resultante de
+  /// `surface.withValues(alpha: 0.8)` e continua compatível com parâmetros
+  /// `const` de widgets.
+  static const Color surfaceOverlay = Color(0xCC10101B);
+
+  /// [background] com 80% de opacidade, usado para escurecer a câmera.
+  ///
+  /// O valor hexadecimal mantém a mesma cor resultante de
+  /// `background.withValues(alpha: 0.8)` e continua compatível com
+  /// parâmetros `const` de widgets.
+  static const Color backgroundOverlay = Color(0xCC06060B);
+
   /// Superfície ainda mais clara, para elementos "dentro" de um cartão.
   static const Color surfaceHigh = Color(0xFF1A1A2E);
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../core/qr_type_presentation.dart';
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_text_styles.dart';
 import '../models/scan_history_entry.dart';
 import '../services/qr_content_parser.dart';
 import '../services/scan_history_service.dart';
@@ -109,11 +110,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 entry: entry,
                 onTap: () {
                   final parsed = QrContentParser.parse(entry.rawValue);
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ResultScreen(content: parsed),
-                    ),
-                  );
+                  Navigator.of(context).push(ResultScreen.route(parsed));
                 },
                 onDismissed: () => _removeEntry(entry),
               );
@@ -146,7 +143,7 @@ class _EmptyHistory extends StatelessWidget {
             Text(
               'Os QR Codes que você ler aparecerão aqui.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+              style: AppTextStyles.emptyStateCaption,
             ),
           ],
         ),
@@ -208,19 +205,12 @@ class _HistoryTile extends StatelessWidget {
                         entry.rawValue,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontFamily: 'monospace',
-                          fontSize: 14,
-                        ),
+                        style: AppTextStyles.mono(fontSize: 14),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${entry.type.label} · ${_formatDate(entry.scannedAt)}',
-                        style: const TextStyle(
-                          color: AppColors.textMuted,
-                          fontSize: 11,
-                        ),
+                        style: AppTextStyles.mutedCaption,
                       ),
                     ],
                   ),

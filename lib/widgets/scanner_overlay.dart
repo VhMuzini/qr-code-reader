@@ -3,6 +3,8 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
+
 /// Desenha a "janela de escaneamento": um recorte quadrado com cantos em
 /// destaque (estilo mira/HUD) e uma linha de laser animada que sobe e
 /// desce dentro da área, reforçando a sensação de leitura ativa.
@@ -13,7 +15,7 @@ import 'package:flutter/material.dart';
 class ScannerOverlay extends StatefulWidget {
   const ScannerOverlay({
     super.key,
-    this.color = const Color(0xFF00F0FF),
+    this.color = AppColors.neonCyan,
     this.cutOutSize = 260,
     this.borderRadius = 24,
   });
@@ -114,7 +116,7 @@ class _ScannerOverlayPainter extends CustomPainter {
 
     canvas.drawPath(
       overlayPath,
-      Paint()..color = const Color(0xCC06060B),
+      Paint()..color = AppColors.backgroundOverlay,
     );
   }
 
