@@ -230,6 +230,10 @@ void main() {
     });
   });
 
+  /// Botão "Abrir" do diálogo de confirmação de link externo, distinto do
+  /// botão de ação da tela que tem o mesmo rótulo.
+  final confirmOpen = find.widgetWithText(TextButton, 'Abrir');
+
   group('ResultScreen — ações', () {
     testWidgets('copiar coloca o texto bruto na área de transferência',
         (tester) async {
@@ -267,7 +271,8 @@ void main() {
       expect(shareCalls, isNotEmpty);
     });
 
-    testWidgets('abrir link dispara o launcher com a URL lida', (tester) async {
+    testWidgets('abrir link pede confirmação antes de disparar o launcher',
+        (tester) async {
       await pumpResult(
         tester,
         const ParsedQrContent(
@@ -279,7 +284,31 @@ void main() {
       await tester.tap(find.text('Abrir'));
       await tester.pumpAndSettle();
 
+      expect(find.text('Abrir link externo?'), findsOneWidget);
+      expect(find.text('flutter.dev'), findsOneWidget);
+      expect(launchedUris(), isEmpty);
+
+      await tester.tap(confirmOpen);
+      await tester.pumpAndSettle();
+
       expect(launchedUris(), ['https://flutter.dev']);
+    });
+
+    testWidgets('cancelar a confirmação não abre o link', (tester) async {
+      await pumpResult(
+        tester,
+        const ParsedQrContent(
+          rawValue: 'https://flutter.dev',
+          type: QrContentType.url,
+        ),
+      );
+
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Cancelar'));
+      await tester.pumpAndSettle();
+
+      expect(launchedUris(), isEmpty);
     });
 
     testWidgets('ligar monta um URI tel:', (tester) async {
@@ -311,7 +340,7 @@ void main() {
       await tester.tap(find.text('Enviar SMS'));
       await tester.pumpAndSettle();
 
-      expect(launchedUris(), ['sms:+551199999999?body=Ola%20mundo']);
+      expect(launchedUris(), ['sms:+551199999999?body=Ola+mundo']);
     });
 
     testWidgets('e-mail monta mailto: com assunto e corpo', (tester) async {
@@ -333,7 +362,7 @@ void main() {
 
       expect(
         launchedUris(),
-        ['mailto:contato@exemplo.com?subject=Oi&body=Tudo%20bem%3F'],
+        ['mailto:contato@exemplo.com?subject=Oi&body=Tudo+bem%3F'],
       );
     });
 
@@ -366,6 +395,8 @@ void main() {
       );
 
       await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(confirmOpen);
       await tester.pumpAndSettle();
 
       expect(launchedUris(), isEmpty);
