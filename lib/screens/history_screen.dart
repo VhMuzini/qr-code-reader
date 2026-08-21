@@ -33,7 +33,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _reload() {
-    setState(() => _historyFuture = _historyService.loadHistory());
+    final future = _historyService.loadHistory();
+    setState(() {
+      _historyFuture = future;
+    });
   }
 
   Future<void> _removeEntry(ScanHistoryEntry entry) async {
